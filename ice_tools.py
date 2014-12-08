@@ -26,8 +26,8 @@ def add_mod(mod, link, meth, offset):
     md.offset = offset
     if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:                        
         md.vertex_group = "retopo_suppo_thawed"
-    md.show_on_cage = True        
-
+    md.show_on_cage = True
+    md.show_expanded = False
 
 def sw_Update(meshlink, wrap_offset, wrap_meth):
     activeObj = bpy.context.active_object
@@ -141,10 +141,16 @@ class SetUpRetopoMesh(bpy.types.Operator):
         md.use_clip = True
         
         #generate grease pencil surface draw mode on retopo mesh
-        bpy.ops.gpencil.data_add()
-        bpy.ops.gpencil.layer_add()
-        context.active_object.grease_pencil.draw_mode = 'SURFACE'
-        context.active_object.grease_pencil.layers.active.line_width = 1
+        bpy.context.scene.tool_settings.grease_pencil_source = 'OBJECT'
+        if context.object.grease_pencil is None: bpy.ops.gpencil.data_add() 
+        if context.object.grease_pencil.layers.active is None: bpy.ops.gpencil.layer_add()
+        #convert to base values
+        context.object.grease_pencil.draw_mode = 'SURFACE'
+        context.object.grease_pencil.layers.active.line_width = 1
+        context.object.grease_pencil.layers.active.show_x_ray = True
+        context.object.grease_pencil.layers.active.use_onion_skinning = False        
+        context.object.grease_pencil.layers.active.use_volumetric_strokes = False
+        context.object.grease_pencil.layers.active.use_onion_skinning = False
         bpy.data.objects[oldObj].select = True        
     
         #further mesh toggles
