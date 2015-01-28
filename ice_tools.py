@@ -95,12 +95,8 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
         bm = bmesh.from_edit_mesh(obj.data)
         
         for v in bm.verts:
-            if wm.clipx_threshold <= 0:
-                if v.co.x >= wm.clipx_threshold:
-                    v.co.x = 0
-            elif wm.clipx_threshold >= 0:
-                if v.co.x <= wm.clipx_threshold:
-                    v.co.x = 0
+            if v.co.x >= (wm.clipx_threshold-(wm.clipx_threshold * 2)) and v.co.x <= wm.clipx_threshold:
+                v.co.x = 0
 
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.select_mode(type=oldSel)
@@ -179,7 +175,7 @@ class ShrinkUpdate(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     apply_mod = bpy.props.BoolProperty(name = "Auto-apply Shrinkwrap", default = True)
-    sw_offset = bpy.props.FloatProperty(name = "Offset:", min = -0.1, max = 0.1, step = 0.1, precision = 3, default = 0)
+    sw_offset = bpy.props.FloatProperty(name = "Offset:", min = -0.5, max = 0.5, step = 0.1, precision = 3, default = 0)
     sw_wrapmethod = bpy.props.EnumProperty(
         name = 'Wrap Method',
         items = (
@@ -333,9 +329,9 @@ class RetopoSupport(bpy.types.Panel):
         row_sw.alignment = 'EXPAND'
         row_sw.operator("shrink.update", "Shrinkwrap Update")
         row_sw.operator("polysculpt.retopo", "", icon = "SCULPTMODE_HLT")
-        row_sw = layout.row(align=True)
+        row_sw = layout.row(align=False)
         row_sw.prop(wm, "clipx_threshold", "Clip X Threshold")
-        
+       
         row_fv = layout.row(align=True)
         row_fv.alignment = 'EXPAND'
         row_fv.operator("freeze_verts.retopo", "Freeze")
@@ -356,7 +352,7 @@ def register():
     bpy.types.WindowManager.sw_target= StringProperty()
     bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
     bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)          
-    bpy.types.WindowManager.clipx_threshold = FloatProperty(min = -0.1, max = 0.1, step = 0.1, precision = 3, default = 0)
+    bpy.types.WindowManager.clipx_threshold = FloatProperty(min = 0, max = 0.1, step = 0.1, precision = 3, default = 0)
   
 def unregister():
     bpy.utils.unregister_module(__name__)
