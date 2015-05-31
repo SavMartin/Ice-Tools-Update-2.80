@@ -93,11 +93,24 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
     if "Mirror" in bpy.data.objects[activeObj.name].modifiers: 
         obj = bpy.context.active_object
         bm = bmesh.from_edit_mesh(obj.data)
-        
-        for v in bm.verts:
-            if v.co.x >= (wm.clipx_threshold-(wm.clipx_threshold * 2)) and v.co.x <= wm.clipx_threshold:
-                v.co.x = 0
+        vcount = 0
+        EPSILON = 1.0e-3
 
+        bpy.ops.mesh.select_all(action='DESELECT')
+        for v in bm.verts:
+            if -EPSILON <= v.co.x <= EPSILON:
+                v.select = True
+                bm.select_history.add(v)
+                v1 = v                
+                vcount += 1
+
+            if vcount > 2:
+                bpy.ops.mesh.select_axis(mode='ALIGNED', axis='X_AXIS')
+                bpy.ops.mesh.loop_multi_select(ring=False)
+                for v in bm.verts:
+                    if v.select == True: v.co.x = 0
+                break 
+            
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.select_mode(type=oldSel)
     
@@ -329,8 +342,8 @@ class RetopoSupport(bpy.types.Panel):
         row_sw.alignment = 'EXPAND'
         row_sw.operator("shrink.update", "Shrinkwrap Update")
         row_sw.operator("polysculpt.retopo", "", icon = "SCULPTMODE_HLT")
-        row_sw = layout.row(align=False)
-        row_sw.prop(wm, "clipx_threshold", "Clip X Threshold")
+        #row_sw = layout.row(align=False)
+        #row_sw.prop(wm, "clipx_threshold", "Clip X Threshold")
        
         row_fv = layout.row(align=True)
         row_fv.alignment = 'EXPAND'
