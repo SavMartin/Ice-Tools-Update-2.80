@@ -104,8 +104,8 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
                 v1 = v                
                 vcount += 1
 
-            if vcount > 2:
-                bpy.ops.mesh.select_axis(mode='ALIGNED', axis='X_AXIS')
+            if vcount > 1:
+                bpy.ops.mesh.select_axis()
                 bpy.ops.mesh.loop_multi_select(ring=False)
                 for v in bm.verts:
                     if v.select == True: v.co.x = 0
@@ -372,18 +372,3 @@ def unregister():
     
 if __name__ == "__main__":
     register()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
