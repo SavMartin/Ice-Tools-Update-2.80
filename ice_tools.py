@@ -106,7 +106,7 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
 
             if vcount > 1:
                 bpy.ops.mesh.select_axis()
-                bpy.ops.mesh.loop_multi_select(ring=False)
+                bpy.ops.mesh.loop_multi_select()
                 for v in bm.verts:
                     if v.select == True: v.co.x = 0
                 break 
@@ -372,3 +372,18 @@ def unregister():
     
 if __name__ == "__main__":
     register()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
