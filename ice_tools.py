@@ -342,8 +342,6 @@ class RetopoSupport(bpy.types.Panel):
         row_sw.alignment = 'EXPAND'
         row_sw.operator("shrink.update", "Shrinkwrap Update")
         row_sw.operator("polysculpt.retopo", "", icon = "SCULPTMODE_HLT")
-        #row_sw = layout.row(align=False)
-        #row_sw.prop(wm, "clipx_threshold", "Clip X Threshold")
        
         row_fv = layout.row(align=True)
         row_fv.alignment = 'EXPAND'
@@ -353,7 +351,7 @@ class RetopoSupport(bpy.types.Panel):
         
         if context.active_object is not None:
             row_view = layout.row(align=True)
-            row_sw.alignment = 'EXPAND'
+            row_view.alignment = 'EXPAND'
             row_view.prop(context.object, "show_wire", toggle =False)
             row_view.prop(context.object, "show_x_ray", toggle =False)
             row_view.prop(context.space_data, "show_occlude_wire", toggle =False)              
@@ -365,25 +363,9 @@ def register():
     bpy.types.WindowManager.sw_target= StringProperty()
     bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
     bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)          
-    bpy.types.WindowManager.clipx_threshold = FloatProperty(min = 0, max = 0.1, step = 0.1, precision = 3, default = 0)
   
 def unregister():
     bpy.utils.unregister_module(__name__)
     
 if __name__ == "__main__":
     register()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
