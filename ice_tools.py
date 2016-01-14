@@ -154,7 +154,7 @@ class SetUpRetopoMesh(bpy.types.Operator):
         if context.object.grease_pencil is None: bpy.ops.gpencil.data_add() 
         if context.object.grease_pencil.layers.active is None: bpy.ops.gpencil.layer_add()
         #convert to base values
-        context.object.grease_pencil.draw_mode = 'SURFACE'
+        context.scene.tool_settings.gpencil_stroke_placement_view3d = 'SURFACE'
         context.object.grease_pencil.layers.active.line_width = 1
         context.object.grease_pencil.layers.active.show_x_ray = True
         context.object.grease_pencil.layers.active.use_onion_skinning = False        
