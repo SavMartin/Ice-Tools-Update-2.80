@@ -29,7 +29,34 @@ def add_mod(mod, link, meth, offset):
     md.show_on_cage = True
     md.show_expanded = False
 
-def sw_Update(meshlink, wrap_offset, wrap_meth):
+def sw_clipping(obj, clipcenter):
+    if "Mirror" in bpy.data.objects[obj].modifiers: 
+        obj = bpy.context.active_object
+        bm = bmesh.from_edit_mesh(obj.data)
+        vcount = 0
+        EPSILON = 1.0e-3
+
+        if clipcenter == True:
+            EPSILON_sel = 1.0e-1
+            for v in bm.verts:
+                if -EPSILON_sel <= v.co.x <= EPSILON_sel:                
+                    if v.select == True: v.co.x = 0
+        else:                
+            bpy.ops.mesh.select_all(action='DESELECT')
+            for v in bm.verts:
+                if -EPSILON <= v.co.x <= EPSILON:
+                    v.select = True
+                    bm.select_history.add(v)
+                    v1 = v                
+                    vcount += 1
+                if vcount > 1:
+                    bpy.ops.mesh.select_axis(mode='ALIGNED')
+                    bpy.ops.mesh.loop_multi_select()
+                    for v in bm.verts:
+                        if v.select == True: v.co.x = 0
+                    break 
+
+def sw_Update(meshlink, wrap_offset, wrap_meth, clipcenter):
     activeObj = bpy.context.active_object
     wm = bpy.context.window_manager 
     oldmod = activeObj.mode
@@ -47,8 +74,10 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
     
     bpy.context.scene.objects.active = activeObj
     bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_mode(type='VERT')    
+    bpy.ops.mesh.select_mode(type='VERT')
     
+    sw_clipping(activeObj.name, clipcenter) 
+
     if "shrinkwrap_apply" in bpy.context.active_object.modifiers:
         bpy.ops.object.modifier_remove(modifier= "shrinkwrap_apply") 
 
@@ -88,29 +117,9 @@ def sw_Update(meshlink, wrap_offset, wrap_meth):
                 if modlist.find("Mirror") == 0: break
                 if modlist.find("Multires") == 0: break
             modops(modifier=modnam)
-                
-    #clipcenter
-    if "Mirror" in bpy.data.objects[activeObj.name].modifiers: 
-        obj = bpy.context.active_object
-        bm = bmesh.from_edit_mesh(obj.data)
-        vcount = 0
-        EPSILON = 1.0e-3
-
-        bpy.ops.mesh.select_all(action='DESELECT')
-        for v in bm.verts:
-            if -EPSILON <= v.co.x <= EPSILON:
-                v.select = True
-                bm.select_history.add(v)
-                v1 = v                
-                vcount += 1
-
-            if vcount > 1:
-                bpy.ops.mesh.select_axis(mode='ALIGNED')
-                bpy.ops.mesh.loop_multi_select()
-                for v in bm.verts:
-                    if v.select == True: v.co.x = 0
-                break 
             
+    sw_clipping(activeObj.name, False)            
+                
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.select_mode(type=oldSel)
     
@@ -188,6 +197,7 @@ class ShrinkUpdate(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     apply_mod = bpy.props.BoolProperty(name = "Auto-apply Shrinkwrap", default = True)
+    sw_clipcenter = bpy.props.BoolProperty(name = "Clip Selected Verts (X)", default = False)
     sw_offset = bpy.props.FloatProperty(name = "Offset:", min = -0.5, max = 0.5, step = 0.1, precision = 3, default = 0)
     sw_wrapmethod = bpy.props.EnumProperty(
         name = 'Wrap Method',
@@ -229,7 +239,7 @@ class ShrinkUpdate(bpy.types.Operator):
                 bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_vgroup"
                 bpy.ops.object.vertex_group_assign()            
 
-            sw_Update(wm.sw_target, self.sw_offset, self.sw_wrapmethod)
+            sw_Update(wm.sw_target, self.sw_offset, self.sw_wrapmethod, self.sw_clipcenter)
             activeObj.select = True
     
         return {'FINISHED'}
