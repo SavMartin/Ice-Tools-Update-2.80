@@ -32,8 +32,9 @@ def add_mod(mod, link, meth, offset):
 def add_mod1(mod):
     md = bpy.context.active_object.modifiers.new(mod, 'SOLIDIFY')
     md.thickness = -0.01
-    md.use_even_offset = True	
-
+    md.offset = 0
+    md.use_even_offset = True
+    	
 def sw_clipping(obj, autoclip, clipcenter):
     if "Mirror" in bpy.data.objects[obj].modifiers: 
         obj = bpy.context.active_object
