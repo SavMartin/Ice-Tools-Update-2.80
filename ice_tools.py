@@ -107,7 +107,10 @@ def sw_Update(meshlink, wrap_offset, wrap_meth, autoclip, clipcenter, use_solid)
 
     #add solid_mod
     if use_solid ==  True:
-        if modlist.find(modnam1) != 1: add_mod1(modnam1)	
+        if modlist.find(modnam1) != 1: add_mod1(modnam1)
+    else:
+       if modlist.find(modnam1) == 1: bpy.ops.object.modifier_remove(modifier=modnam1)
+
 
     #move sw mod up the stack
     for i in modlist:
