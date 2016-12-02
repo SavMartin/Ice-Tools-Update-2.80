@@ -15,7 +15,7 @@ import math
 import bmesh
 from bpy.props import *
 
-def add_mod(mod, link, meth, offset):
+def add_mod(mod, link, meth):
     md = bpy.context.active_object.modifiers.new(mod, 'SHRINKWRAP')
     md.target = bpy.data.objects[link]
     md.wrap_method = meth
@@ -23,7 +23,6 @@ def add_mod(mod, link, meth, offset):
         md.use_negative_direction = True
     if md.wrap_method == "NEAREST_SURFACEPOINT":
         md.use_keep_above_surface = True
-    md.offset = offset
     if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:                        
         md.vertex_group = "retopo_suppo_thawed"
     md.show_on_cage = True
@@ -63,7 +62,7 @@ def sw_clipping(obj, autoclip, clipcenter):
                             if v.select == True: v.co.x = 0
                         break 
 
-def sw_Update(meshlink, wrap_offset, wrap_meth, autoclip, clipcenter, use_solid):
+def sw_Update(meshlink, wrap_meth, autoclip, clipcenter, use_solid):
     activeObj = bpy.context.active_object
     wm = bpy.context.window_manager 
     oldmod = activeObj.mode
@@ -104,7 +103,7 @@ def sw_Update(meshlink, wrap_offset, wrap_meth, autoclip, clipcenter, use_solid)
         bpy.ops.object.vertex_group_assign()
 
     #add sw mod
-    add_mod(modnam, meshlink, wrap_meth, wrap_offset)
+    add_mod(modnam, meshlink, wrap_meth)
 
     #add solid_mod
     if use_solid ==  True:
@@ -214,7 +213,6 @@ class ShrinkUpdate(bpy.types.Operator):
     apply_mod = bpy.props.BoolProperty(name = "Auto-apply Shrinkwrap", default = True)
     sw_autoclip = bpy.props.BoolProperty(name = "Auto-Clip (X)", default = True)
     sw_clipcenter = bpy.props.BoolProperty(name = "Clip Selected Verts (X)", default = False)
-    sw_offset = bpy.props.FloatProperty(name = "Offset:", min = -0.5, max = 0.5, step = 0.1, precision = 3, default = 0)
     sw_wrapmethod = bpy.props.EnumProperty(
         name = 'Wrap Method',
         items = (
@@ -256,7 +254,7 @@ class ShrinkUpdate(bpy.types.Operator):
                 bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_vgroup"
                 bpy.ops.object.vertex_group_assign()
 
-            sw_Update(wm.sw_target, self.sw_offset, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter, self.apply_solid)
+            sw_Update(wm.sw_target, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter, self.apply_solid)
             activeObj.select = True
     
         return {'FINISHED'}
