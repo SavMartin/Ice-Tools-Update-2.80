@@ -111,7 +111,7 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     
     if wm.sw_autoapply == False:
     #move the sw mod below the mirror or multires mod assuming this is your first
-        add_mod(modnam, meshlink, wrap_meth, wrap_offset)   
+        add_mod(modnam, meshlink, wrap_meth)   
         for i in modlist:
             if modlist.find(modnam) == 0: break
             if modlist.find(modnam) == 1:
@@ -331,28 +331,28 @@ class RetopoSupport(bpy.types.Panel):
         layout = self.layout
         wm = context.window_manager
 
-        box = layout.box()
-        box.operator("setup.retopo", "Set Up Retopo Mesh")
-        boxrow = box.row()
-        boxrow.alignment = 'EXPAND'
-        boxrow.prop(wm, "add_mirror", "Add Mirror")
-        boxrow.prop(wm, "add_solid", "Add Solidify")
-                
-        box = layout.box()
-        box.operator("shrink.update", "Shrinkwrap Update")
+        row = layout.row(align=True) 
+        row.alignment = 'EXPAND'
+        row.operator("setup.retopo", "Set Up Retopo Mesh")
+        row = layout.row()        
+        row.prop(wm, "add_mirror", "Add Mirror")
+        row.prop(wm, "add_solid", "Add Solidify")
+
+        row = layout.row()
+        row.operator("shrink.update", "Shrinkwrap Update")
        
-        boxrow = box.row()  
-        boxrow.alignment = 'EXPAND'
-        boxrow.operator("freeze_verts.retopo", "Freeze")
-        boxrow.operator("thaw_freeze_verts.retopo", "Thaw")
-        boxrow.operator("show_freeze_verts.retopo", "Show") 
+        row = layout.row(align=True) 
+        row.alignment = 'EXPAND'
+        row.operator("freeze_verts.retopo", "Freeze")
+        row.operator("thaw_freeze_verts.retopo", "Thaw")
+        row.operator("show_freeze_verts.retopo", "Show") 
         
         if context.active_object is not None:
-            boxrow1 = box.row()             
-            boxrow1.alignment = 'EXPAND'
-            boxrow1.prop(context.object, "show_wire", toggle =False)
-            boxrow1.prop(context.object, "show_x_ray", toggle =False)
-            boxrow1.prop(context.space_data, "show_occlude_wire", toggle =False)
+            row = layout.row(align=True) 
+            row.alignment = 'EXPAND'
+            row.prop(context.object, "show_wire", toggle =False)
+            row.prop(context.object, "show_x_ray", toggle =False)
+            row.prop(context.space_data, "show_occlude_wire", toggle =False)
 
 def register():
     bpy.utils.register_module(__name__)
