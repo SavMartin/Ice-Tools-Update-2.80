@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Ice Tools",
     "author": "Ian Lloyd Dela Cruz",
-    "version": (2, 0),
+    "version": (2, 1),
     "blender": (2, 7, 0),
     "location": "3d View > Tool shelf",
     "description": "Retopology support",
@@ -28,12 +28,6 @@ def add_mod(mod, link, meth):
     md.show_on_cage = True
     md.show_expanded = False
 
-def add_mod1(mod):
-    md = bpy.context.active_object.modifiers.new(mod, 'SOLIDIFY')
-    md.thickness = -0.01
-    md.offset = 0
-    md.use_even_offset = True
-    	
 def sw_clipping(obj, autoclip, clipcenter):
     if "Mirror" in bpy.data.objects[obj].modifiers: 
         obj = bpy.context.active_object
@@ -62,7 +56,7 @@ def sw_clipping(obj, autoclip, clipcenter):
                             if v.select == True: v.co.x = 0
                         break 
 
-def sw_Update(meshlink, wrap_meth, autoclip, clipcenter, use_solid):
+def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     activeObj = bpy.context.active_object
     wm = bpy.context.window_manager 
     oldmod = activeObj.mode
@@ -104,13 +98,6 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter, use_solid):
 
     #add sw mod
     add_mod(modnam, meshlink, wrap_meth)
-
-    #add solid_mod
-    if use_solid ==  True:
-        if modlist.find(modnam1) != 1: add_mod1(modnam1)
-    else:
-       if modlist.find(modnam1) == 1: bpy.ops.object.modifier_remove(modifier=modnam1)
-
 
     #move sw mod up the stack
     for i in modlist:
@@ -168,9 +155,17 @@ class SetUpRetopoMesh(bpy.types.Operator):
         activeObj = context.active_object
 
         #place mirror mod
-        md = activeObj.modifiers.new("Mirror", 'MIRROR')
-        md.show_on_cage = True
-        md.use_clip = True
+        if wm.add_mirror == True:
+            md = activeObj.modifiers.new("Mirror", 'MIRROR')
+            md.show_on_cage = True
+            md.use_clip = True
+
+        #place solidify mod
+        if wm.add_solid == True:
+            md = activeObj.modifiers.new("solidify_apply", 'SOLIDIFY')
+            md.thickness = -0.01
+            md.offset = 0
+            md.use_even_offset = True           
         
         #generate grease pencil surface draw mode on retopo mesh
         bpy.context.scene.tool_settings.grease_pencil_source = 'OBJECT'
@@ -220,7 +215,6 @@ class ShrinkUpdate(bpy.types.Operator):
             ('PROJECT', 'Project',""),
             ('NEAREST_SURFACEPOINT', 'Nearest Surface Point',"")),
         default = 'PROJECT')
-    apply_solid = bpy.props.BoolProperty(name = "Solidify", default = False)		
     
     @classmethod
     def poll(cls, context):
@@ -254,7 +248,7 @@ class ShrinkUpdate(bpy.types.Operator):
                 bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_vgroup"
                 bpy.ops.object.vertex_group_assign()
 
-            sw_Update(wm.sw_target, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter, self.apply_solid)
+            sw_Update(wm.sw_target, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter)
             activeObj.select = True
     
         return {'FINISHED'}
@@ -325,29 +319,6 @@ class ShowFrozenVerts(bpy.types.Operator):
                    
         return {'FINISHED'}
 
-class PolySculpt(bpy.types.Operator):
-    '''Polysculpt retopology mesh'''
-    bl_idname = "polysculpt.retopo"
-    bl_label = "Sculpts Retopo Mesh"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    @classmethod
-    def poll(cls, context):
-        return context.active_object is not None
-    
-    def execute(self, context):
-        activeObj = context.active_object        
-        wm = context.window_manager
-        
-        if wm.sw_mesh != activeObj.name:
-            self.report({'WARNING'}, "Establish Link First!")
-        else:
-            context.space_data.show_only_render = False            
-            context.object.show_wire = True            
-            bpy.ops.object.mode_set(mode='SCULPT')
-
-        return {'FINISHED'}     
-    
 class RetopoSupport(bpy.types.Panel):
     """Retopology Support Functions"""
     bl_label = "Ice Tools"
@@ -360,26 +331,28 @@ class RetopoSupport(bpy.types.Panel):
         layout = self.layout
         wm = context.window_manager
 
-        row_sw = layout.row(align=True)
-        row_sw.alignment = 'EXPAND'
-        row_sw.operator("setup.retopo", "Set Up Retopo Mesh")
-        row_sw = layout.row(align=True)
-        row_sw.alignment = 'EXPAND'
-        row_sw.operator("shrink.update", "Shrinkwrap Update")
-        row_sw.operator("polysculpt.retopo", "", icon = "SCULPTMODE_HLT")
+        box = layout.box()
+        box.operator("setup.retopo", "Set Up Retopo Mesh")
+        boxrow = box.row()
+        boxrow.alignment = 'EXPAND'
+        boxrow.prop(wm, "add_mirror", "Add Mirror")
+        boxrow.prop(wm, "add_solid", "Add Solidify")
+                
+        box = layout.box()
+        box.operator("shrink.update", "Shrinkwrap Update")
        
-        row_fv = layout.row(align=True)
-        row_fv.alignment = 'EXPAND'
-        row_fv.operator("freeze_verts.retopo", "Freeze")
-        row_fv.operator("thaw_freeze_verts.retopo", "Thaw")
-        row_fv.operator("show_freeze_verts.retopo", "Show") 
+        boxrow = box.row()  
+        boxrow.alignment = 'EXPAND'
+        boxrow.operator("freeze_verts.retopo", "Freeze")
+        boxrow.operator("thaw_freeze_verts.retopo", "Thaw")
+        boxrow.operator("show_freeze_verts.retopo", "Show") 
         
         if context.active_object is not None:
-            row_view = layout.row(align=True)
-            row_view.alignment = 'EXPAND'
-            row_view.prop(context.object, "show_wire", toggle =False)
-            row_view.prop(context.object, "show_x_ray", toggle =False)
-            row_view.prop(context.space_data, "show_occlude_wire", toggle =False)              
+            boxrow1 = box.row()             
+            boxrow1.alignment = 'EXPAND'
+            boxrow1.prop(context.object, "show_wire", toggle =False)
+            boxrow1.prop(context.object, "show_x_ray", toggle =False)
+            boxrow1.prop(context.space_data, "show_occlude_wire", toggle =False)
 
 def register():
     bpy.utils.register_module(__name__)
@@ -387,10 +360,19 @@ def register():
     bpy.types.WindowManager.sw_mesh= StringProperty()
     bpy.types.WindowManager.sw_target= StringProperty()
     bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
-    bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)          
+    bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)
+    bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
+    bpy.types.WindowManager.add_solid = BoolProperty(default=False)              
   
 def unregister():
     bpy.utils.unregister_module(__name__)
+    
+    bpy.types.WindowManager.sw_mesh= StringProperty()
+    bpy.types.WindowManager.sw_target= StringProperty()
+    bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
+    bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)
+    bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
+    bpy.types.WindowManager.add_solid = BoolProperty(default=False)      
     
 if __name__ == "__main__":
     register()
