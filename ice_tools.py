@@ -99,26 +99,11 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     #add sw mod
     add_mod(modnam, meshlink, wrap_meth)
 
-    #move sw mod up the stack
-    for i in modlist:
-        if modlist.find(modnam) == 0: break
-        modops(modifier=modnam)
-            
     #apply modifier
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.modifier_apply(apply_as='DATA', modifier=modnam)
     bpy.ops.object.mode_set(mode='EDIT')
     
-    if wm.sw_autoapply == False:
-    #move the sw mod below the mirror or multires mod assuming this is your first
-        add_mod(modnam, meshlink, wrap_meth)   
-        for i in modlist:
-            if modlist.find(modnam) == 0: break
-            if modlist.find(modnam) == 1:
-                if modlist.find("Mirror") == 0: break
-                if modlist.find("Multires") == 0: break
-            modops(modifier=modnam)
-            
     sw_clipping(activeObj.name, autoclip, False)            
                 
     bpy.ops.mesh.select_all(action='DESELECT')
@@ -205,7 +190,6 @@ class ShrinkUpdate(bpy.types.Operator):
     bl_label = "Shrinkwrap Update"
     bl_options = {'REGISTER', 'UNDO'}
     
-    apply_mod = bpy.props.BoolProperty(name = "Auto-apply Shrinkwrap", default = True)
     sw_autoclip = bpy.props.BoolProperty(name = "Auto-Clip (X)", default = True)
     sw_clipcenter = bpy.props.BoolProperty(name = "Clip Selected Verts (X)", default = False)
     sw_wrapmethod = bpy.props.EnumProperty(
@@ -238,11 +222,6 @@ class ShrinkUpdate(bpy.types.Operator):
             self.report({'WARNING'}, "Establish Link First!")
             return {'FINISHED'}
         else:
-            if self.apply_mod == True:
-               wm.sw_autoapply = True
-            else:
-               wm.sw_autoapply = False
-
             if activeObj.mode == 'EDIT':
                 bpy.ops.object.vertex_group_add()
                 bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_vgroup"
@@ -360,7 +339,6 @@ def register():
     bpy.types.WindowManager.sw_mesh= StringProperty()
     bpy.types.WindowManager.sw_target= StringProperty()
     bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
-    bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)
     bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
     bpy.types.WindowManager.add_solid = BoolProperty(default=False)              
   
@@ -370,7 +348,6 @@ def unregister():
     bpy.types.WindowManager.sw_mesh= StringProperty()
     bpy.types.WindowManager.sw_target= StringProperty()
     bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
-    bpy.types.WindowManager.sw_autoapply = BoolProperty(default=True)
     bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
     bpy.types.WindowManager.add_solid = BoolProperty(default=False)      
     
