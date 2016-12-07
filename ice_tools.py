@@ -61,8 +61,7 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     wm = bpy.context.window_manager 
     oldmod = activeObj.mode
     selmod = bpy.context.tool_settings.mesh_select_mode
-    modnam = "shrinkwrap_apply"
-    modnam1 = "solidify_apply"
+    modnam = "Shrinkwrap"
     modlist = bpy.context.object.modifiers
     modops = bpy.ops.object.modifier_move_up
         
@@ -79,8 +78,8 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     
     sw_clipping(activeObj.name, autoclip, clipcenter) 
 
-    if "shrinkwrap_apply" in bpy.context.active_object.modifiers:
-        bpy.ops.object.modifier_remove(modifier= "shrinkwrap_apply") 
+    if "Shrinkwrap" in bpy.context.active_object.modifiers:
+        bpy.ops.object.modifier_remove(modifier= "Shrinkwrap") 
 
     if "retopo_suppo_thawed" in bpy.context.active_object.vertex_groups:
         tv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_thawed"].index
@@ -98,6 +97,25 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
 
     #add sw mod
     add_mod(modnam, meshlink, wrap_meth)
+    
+    #add or remove mirror mod
+    if wm.add_mirror == False:
+        bpy.ops.object.modifier_remove(modifier="Mirror")
+    else:
+        if modlist.find("Mirror") == -1:
+            md = activeObj.modifiers.new("Mirror", 'MIRROR')
+            md.show_on_cage = True
+            md.use_clip = True
+
+    #add or remove solidify mod            
+    if wm.add_solid == False:
+        bpy.ops.object.modifier_remove(modifier="Solidify")
+    else:
+        if modlist.find("Solidify") == -1:
+            md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
+            md.thickness = -0.01
+            md.offset = 0
+            md.use_even_offset = True            
 
     #apply modifier
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -147,7 +165,7 @@ class SetUpRetopoMesh(bpy.types.Operator):
 
         #place solidify mod
         if wm.add_solid == True:
-            md = activeObj.modifiers.new("solidify_apply", 'SOLIDIFY')
+            md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
             md.thickness = -0.01
             md.offset = 0
             md.use_even_offset = True           
