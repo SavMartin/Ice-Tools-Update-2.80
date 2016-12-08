@@ -23,13 +23,13 @@ def add_mod(mod, link, meth):
         md.use_negative_direction = True
     if md.wrap_method == "NEAREST_SURFACEPOINT":
         md.use_keep_above_surface = True
-    if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:                        
+    if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:
         md.vertex_group = "retopo_suppo_thawed"
     md.show_on_cage = True
     md.show_expanded = False
 
 def sw_clipping(obj, autoclip, clipcenter):
-    if "Mirror" in bpy.data.objects[obj].modifiers: 
+    if "Mirror" in bpy.data.objects[obj].modifiers:
         obj = bpy.context.active_object
         bm = bmesh.from_edit_mesh(obj.data)
         vcount = 0
@@ -38,48 +38,46 @@ def sw_clipping(obj, autoclip, clipcenter):
         if clipcenter == True:
             EPSILON_sel = 1.0e-1
             for v in bm.verts:
-                if -EPSILON_sel <= v.co.x <= EPSILON_sel:                
+                if -EPSILON_sel <= v.co.x <= EPSILON_sel:
                     if v.select == True: v.co.x = 0
-        else:                
+        else:
             if autoclip == True:
                 bpy.ops.mesh.select_all(action='DESELECT')
                 for v in bm.verts:
                     if -EPSILON <= v.co.x <= EPSILON:
                         v.select = True
                         bm.select_history.add(v)
-                        v1 = v                
+                        v1 = v
                         vcount += 1
                     if vcount > 1:
                         bpy.ops.mesh.select_axis(mode='ALIGNED')
                         bpy.ops.mesh.loop_multi_select()
                         for v in bm.verts:
                             if v.select == True: v.co.x = 0
-                        break 
+                        break
 
 def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
     activeObj = bpy.context.active_object
-    wm = bpy.context.window_manager 
     oldmod = activeObj.mode
     selmod = bpy.context.tool_settings.mesh_select_mode
     modnam = "Shrinkwrap"
     modlist = bpy.context.object.modifiers
-    modops = bpy.ops.object.modifier_move_up
-        
-    if selmod[0] == True: 
+
+    if selmod[0] == True:
         oldSel = 'VERT'
-    if selmod[1] == True: 
+    if selmod[1] == True:
         oldSel = 'EDGE'
-    if selmod[2] == True: 
+    if selmod[2] == True:
         oldSel = 'FACE'
-    
+
     bpy.context.scene.objects.active = activeObj
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type='VERT')
-    
-    sw_clipping(activeObj.name, autoclip, clipcenter) 
+
+    sw_clipping(activeObj.name, autoclip, clipcenter)
 
     if "Shrinkwrap" in bpy.context.active_object.modifiers:
-        bpy.ops.object.modifier_remove(modifier= "Shrinkwrap") 
+        bpy.ops.object.modifier_remove(modifier= "Shrinkwrap")
 
     if "retopo_suppo_thawed" in bpy.context.active_object.vertex_groups:
         tv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_thawed"].index
@@ -97,42 +95,23 @@ def sw_Update(meshlink, wrap_meth, autoclip, clipcenter):
 
     #add sw mod
     add_mod(modnam, meshlink, wrap_meth)
-    
-    #add or remove mirror mod
-    if wm.add_mirror == False:
-        bpy.ops.object.modifier_remove(modifier="Mirror")
-    else:
-        if modlist.find("Mirror") == -1:
-            md = activeObj.modifiers.new("Mirror", 'MIRROR')
-            md.show_on_cage = True
-            md.use_clip = True
-
-    #add or remove solidify mod            
-    if wm.add_solid == False:
-        bpy.ops.object.modifier_remove(modifier="Solidify")
-    else:
-        if modlist.find("Solidify") == -1:
-            md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
-            md.thickness = -0.01
-            md.offset = 0
-            md.use_even_offset = True            
 
     #apply modifier
     bpy.ops.object.mode_set(mode='OBJECT')
     bpy.ops.object.modifier_apply(apply_as='DATA', modifier=modnam)
     bpy.ops.object.mode_set(mode='EDIT')
-    
-    sw_clipping(activeObj.name, autoclip, False)            
-                
+
+    sw_clipping(activeObj.name, autoclip, False)
+
     bpy.ops.mesh.select_all(action='DESELECT')
     bpy.ops.mesh.select_mode(type=oldSel)
-    
+
     if "retopo_suppo_vgroup" in bpy.context.active_object.vertex_groups:
         vg = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_vgroup"].index
-        activeObj.vertex_groups.active_index = vg            
+        activeObj.vertex_groups.active_index = vg
         bpy.ops.object.vertex_group_select()
-        bpy.ops.object.vertex_group_remove(all=False)           
-    
+        bpy.ops.object.vertex_group_remove(all=False)
+
     bpy.ops.object.mode_set(mode=oldmod)
 
 class SetUpRetopoMesh(bpy.types.Operator):
@@ -140,45 +119,47 @@ class SetUpRetopoMesh(bpy.types.Operator):
     bl_idname = "setup.retopo"
     bl_label = "Set Up Retopo Mesh"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     @classmethod
     def poll(cls, context):
         return context.active_object is not None and context.active_object.mode == 'OBJECT' or context.active_object.mode == 'SCULPT'
-    
+
     def execute(self, context):
-        wm = context.window_manager 
+        scn = context.scene
         oldObj = context.active_object.name
 
         bpy.ops.view3d.snap_cursor_to_active()
         bpy.ops.mesh.primitive_plane_add(enter_editmode = True)
-        
+
         bpy.ops.mesh.delete(type='VERT')
         bpy.ops.object.editmode_toggle()
-        context.object.name = oldObj + "_retopo_mesh"    
+        context.object.name = oldObj + "_retopo_mesh"
         activeObj = context.active_object
 
         #place mirror mod
-        if wm.add_mirror == True:
+        if scn.add_mirror == True:
             md = activeObj.modifiers.new("Mirror", 'MIRROR')
             md.show_on_cage = True
             md.use_clip = True
+            md.use_y = scn.add_mirror_y
+            md.use_z = scn.add_mirror_z
 
         #place solidify mod
-        if wm.add_solid == True:
+        if scn.add_solid == True:
             md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
-            md.thickness = -0.01
-            md.offset = 0
-            md.use_even_offset = True           
-        
+            md.thickness = scn.add_solid_thickness
+            md.offset = scn.add_solid_offset
+            md.use_even_offset = True
+
         #generate grease pencil surface draw mode on retopo mesh
         bpy.context.scene.tool_settings.grease_pencil_source = 'OBJECT'
-        if context.object.grease_pencil is None: bpy.ops.gpencil.data_add() 
+        if context.object.grease_pencil is None: bpy.ops.gpencil.data_add()
         if context.object.grease_pencil.layers.active is None: bpy.ops.gpencil.layer_add()
         #convert to base values
         context.scene.tool_settings.gpencil_stroke_placement_view3d = 'SURFACE'
         context.object.grease_pencil.layers.active.line_change= 1
         context.object.grease_pencil.layers.active.show_x_ray = True
-        context.object.grease_pencil.layers.active.use_onion_skinning = False        
+        context.object.grease_pencil.layers.active.use_onion_skinning = False
         context.object.grease_pencil.layers.active.use_volumetric_strokes = False
         context.object.grease_pencil.layers.active.use_onion_skinning = False
         bpy.data.objects[oldObj].select = True
@@ -189,25 +170,25 @@ class SetUpRetopoMesh(bpy.types.Operator):
         context.scene.tool_settings.snap_element = 'FACE'
         context.scene.tool_settings.snap_target = 'CLOSEST'
         context.scene.tool_settings.use_snap_project = True
-        context.object.show_all_edges = True 
-        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')        
+        context.object.show_all_edges = True
+        bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
 
         #establish link for shrinkwrap update function
-        wm.sw_target = oldObj
-        wm.sw_mesh = activeObj.name
-        
-        for SelectedObject in context.selected_objects :
-            if SelectedObject != activeObj :
+        scn.sw_target = oldObj
+        scn.sw_mesh = activeObj.name
+
+        for SelectedObject in context.selected_objects:
+            if SelectedObject != activeObj:
                 SelectedObject.select = False
         activeObj.select = True
-        return {'FINISHED'}         
-        
+        return {'FINISHED'}
+
 class ShrinkUpdate(bpy.types.Operator):
     '''Applies Shrinkwrap Mod on Retopo Mesh'''
     bl_idname = "shrink.update"
     bl_label = "Shrinkwrap Update"
     bl_options = {'REGISTER', 'UNDO'}
-    
+
     sw_autoclip = bpy.props.BoolProperty(name = "Auto-Clip (X)", default = True)
     sw_clipcenter = bpy.props.BoolProperty(name = "Clip Selected Verts (X)", default = False)
     sw_wrapmethod = bpy.props.EnumProperty(
@@ -217,26 +198,26 @@ class ShrinkUpdate(bpy.types.Operator):
             ('PROJECT', 'Project',""),
             ('NEAREST_SURFACEPOINT', 'Nearest Surface Point',"")),
         default = 'PROJECT')
-    
+
     @classmethod
     def poll(cls, context):
         return context.active_object is not None
 
     def execute(self, context):
         activeObj = context.active_object
-        wm = context.window_manager        
-        
+        scn = context.scene
+
         #establish link
         if len(bpy.context.selected_objects) == 2:
             for SelectedObject in bpy.context.selected_objects:
                 if SelectedObject != activeObj:
-                    wm.sw_target = SelectedObject.name
+                    scn.sw_target = SelectedObject.name
                 else:
-                    wm.sw_mesh = activeObj.name
+                    scn.sw_mesh = activeObj.name
                 if SelectedObject != activeObj :
-                    SelectedObject.select = False                    
-        
-        if wm.sw_mesh != activeObj.name:
+                    SelectedObject.select = False
+
+        if scn.sw_mesh != activeObj.name:
             self.report({'WARNING'}, "Establish Link First!")
             return {'FINISHED'}
         else:
@@ -245,16 +226,15 @@ class ShrinkUpdate(bpy.types.Operator):
                 bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_vgroup"
                 bpy.ops.object.vertex_group_assign()
 
-            sw_Update(wm.sw_target, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter)
+            sw_Update(scn.sw_target, self.sw_wrapmethod, self.sw_autoclip, self.sw_clipcenter)
             activeObj.select = True
-    
+
         return {'FINISHED'}
 
 class FreezeVerts(bpy.types.Operator):
     '''Immunize verts from shrinkwrap update'''
     bl_idname = "freeze_verts.retopo"
     bl_label = "Freeze Vertices"
-    bl_options = {'REGISTER', 'UNDO'}    
 
     @classmethod
     def poll(cls, context):
@@ -262,43 +242,22 @@ class FreezeVerts(bpy.types.Operator):
 
     def execute(self, context):
         activeObj = bpy.context.active_object
-        
+
         if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:
             fv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_frozen"].index
             activeObj.vertex_groups.active_index = fv
             bpy.ops.object.vertex_group_assign()
-        else:                                    
+        else:
             bpy.ops.object.vertex_group_add()
             bpy.data.objects[activeObj.name].vertex_groups.active.name = "retopo_suppo_frozen"
             bpy.ops.object.vertex_group_assign()
-        
-        return {'FINISHED'} 
+
+        return {'FINISHED'}
 
 class ThawFrozenVerts(bpy.types.Operator):
     '''Remove frozen verts'''
     bl_idname = "thaw_freeze_verts.retopo"
     bl_label = "Thaw Frozen Vertices"
-    bl_options = {'REGISTER', 'UNDO'}    
-
-    @classmethod
-    def poll(cls, context):
-        return context.active_object is not None and context.active_object.mode == 'EDIT'
-
-    def execute(self, context):
-        activeObj = bpy.context.active_object
-
-        if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:    
-            tv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_frozen"].index
-            activeObj.vertex_groups.active_index = tv
-            bpy.ops.object.vertex_group_remove_from()
-
-        return {'FINISHED'}  
-
-class ShowFrozenVerts(bpy.types.Operator):
-    '''Show frozen verts'''
-    bl_idname = "show_freeze_verts.retopo"
-    bl_label = "Show Frozen Vertices"
-    bl_options = {'REGISTER', 'UNDO'}    
 
     @classmethod
     def poll(cls, context):
@@ -308,12 +267,88 @@ class ShowFrozenVerts(bpy.types.Operator):
         activeObj = bpy.context.active_object
 
         if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:
-            bpy.ops.mesh.select_mode(type='VERT')  
+            tv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_frozen"].index
+            activeObj.vertex_groups.active_index = tv
+            bpy.ops.object.vertex_group_remove_from()
+
+        return {'FINISHED'}
+
+class ShowFrozenVerts(bpy.types.Operator):
+    '''Show frozen verts'''
+    bl_idname = "show_freeze_verts.retopo"
+    bl_label = "Show Frozen Vertices"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.mode == 'EDIT'
+
+    def execute(self, context):
+        activeObj = bpy.context.active_object
+
+        if "retopo_suppo_frozen" in bpy.context.active_object.vertex_groups:
+            bpy.ops.mesh.select_mode(type='VERT')
             fv = bpy.data.objects[activeObj.name].vertex_groups["retopo_suppo_frozen"].index
             activeObj.vertex_groups.active_index = fv
             bpy.ops.mesh.select_all(action='DESELECT')
             bpy.ops.object.vertex_group_select()
-                   
+
+        return {'FINISHED'}
+
+class UpdateModifiers(bpy.types.Operator):
+    '''Update Mirror and Solidify modifiers'''
+    bl_idname = "update_modifiers.retopo"
+    bl_label = "Update Mirror and Solidify Modidiers"
+
+    @classmethod
+    def poll(cls, context):
+        return context.active_object is not None and context.active_object.mode == 'OBJECT'
+
+    def execute(self, context):
+        activeObj = bpy.context.active_object
+        modlist = bpy.context.object.modifiers
+        scn = context.scene
+
+        #establish link
+        if len(bpy.context.selected_objects) == 2:
+            for SelectedObject in bpy.context.selected_objects:
+                if SelectedObject != activeObj:
+                    scn.sw_target = SelectedObject.name
+                else:
+                    scn.sw_mesh = activeObj.name
+                if SelectedObject != activeObj :
+                    SelectedObject.select = False
+
+        if scn.sw_mesh != activeObj.name:
+            self.report({'WARNING'}, "Not Retopo Mesh!")
+            return {'FINISHED'}
+        else:
+            #add or remove mirror mod
+            if scn.add_mirror == False:
+                bpy.ops.object.modifier_remove(modifier="Mirror")
+            else:
+                if modlist.find("Mirror") == -1:
+                    md = activeObj.modifiers.new("Mirror", 'MIRROR')
+                    md.show_on_cage = True
+                    md.use_clip = True
+                    md.use_y = scn.add_mirror_y
+                    md.use_z = scn.add_mirror_z
+                else:
+                    activeObj.modifiers["Mirror"].use_y = scn.add_mirror_y
+                    activeObj.modifiers["Mirror"].use_z = scn.add_mirror_z
+
+            #add or remove solidify mod
+            if scn.add_solid == False:
+                bpy.ops.object.modifier_remove(modifier="Solidify")
+            else:
+                if modlist.find("Solidify") == -1:
+                    md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
+                    md.thickness = scn.add_solid_thickness
+                    md.offset = scn.add_solid_offset
+                    md.use_even_offset = True
+                else:
+                    activeObj.modifiers["Solidify"].thickness = scn.add_solid_thickness
+                    activeObj.modifiers["Solidify"].offset = scn.add_solid_offset
+
         return {'FINISHED'}
 
 class RetopoSupport(bpy.types.Panel):
@@ -325,27 +360,39 @@ class RetopoSupport(bpy.types.Panel):
     bl_category = 'Retopology'
 
     def draw(self, context):
+        scn = context.scene
         layout = self.layout
-        wm = context.window_manager
 
-        row = layout.row(align=True) 
+        row = layout.row(align=True)
         row.alignment = 'EXPAND'
         row.operator("setup.retopo", "Set Up Retopo Mesh")
-        row = layout.row()        
-        row.prop(wm, "add_mirror", "Add Mirror")
-        row.prop(wm, "add_solid", "Add Solidify")
+        row = layout.row()
+        col = row.column()
+        col.alignment = 'EXPAND'
+        box = col.box()
+        box.prop(scn, "add_mirror", "Add Mirror")
+        colsplit = row.column()
+        boxsplit = colsplit.box()
+        boxsplit.prop(scn, "add_solid", "Add Solidify")
+        boxsplit.prop(scn, "add_solid_thickness", "Thickness")
+        boxsplit.prop(scn, "add_solid_offset", "Offset")
+        box.prop(scn, "add_mirror_y", "Y")
+        box.prop(scn, "add_mirror_z", "Z")
 
         row = layout.row()
-        row.operator("shrink.update", "Shrinkwrap Update")
-       
-        row = layout.row(align=True) 
+        row.operator("update_modifiers.retopo", "Update Modifiers")
+
+        row = layout.row()
+        row.operator("shrink.update", "Apply Shrinkwrap")
+
+        row = layout.row(align=True)
         row.alignment = 'EXPAND'
         row.operator("freeze_verts.retopo", "Freeze")
         row.operator("thaw_freeze_verts.retopo", "Thaw")
-        row.operator("show_freeze_verts.retopo", "Show") 
-        
+        row.operator("show_freeze_verts.retopo", "Show")
+
         if context.active_object is not None:
-            row = layout.row(align=True) 
+            row = layout.row(align=True)
             row.alignment = 'EXPAND'
             row.prop(context.object, "show_wire", toggle =False)
             row.prop(context.object, "show_x_ray", toggle =False)
@@ -353,21 +400,25 @@ class RetopoSupport(bpy.types.Panel):
 
 def register():
     bpy.utils.register_module(__name__)
-    
-    bpy.types.WindowManager.sw_mesh= StringProperty()
-    bpy.types.WindowManager.sw_target= StringProperty()
-    bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
-    bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
-    bpy.types.WindowManager.add_solid = BoolProperty(default=False)              
-  
+
+    bpy.types.Scene.sw_mesh= StringProperty()
+    bpy.types.Scene.sw_target= StringProperty()
+    bpy.types.Scene.sw_use_onlythawed = BoolProperty(default=False)
+    bpy.types.Scene.add_mirror = BoolProperty(default=True)
+    bpy.types.Scene.add_mirror_y = BoolProperty(default=False)
+    bpy.types.Scene.add_mirror_z = BoolProperty(default=False)
+    bpy.types.Scene.add_solid = BoolProperty(default=False)
+    bpy.types.Scene.add_solid_thickness = FloatProperty(
+            default = -0.01,
+            min = -1, max = 1
+            )
+    bpy.types.Scene.add_solid_offset= FloatProperty(
+            default = 0,
+            min = -1, max = 1
+            )
+
 def unregister():
     bpy.utils.unregister_module(__name__)
-    
-    bpy.types.WindowManager.sw_mesh= StringProperty()
-    bpy.types.WindowManager.sw_target= StringProperty()
-    bpy.types.WindowManager.sw_use_onlythawed = BoolProperty(default=False)      
-    bpy.types.WindowManager.add_mirror = BoolProperty(default=True)
-    bpy.types.WindowManager.add_solid = BoolProperty(default=False)      
-    
+
 if __name__ == "__main__":
     register()
