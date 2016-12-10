@@ -1,6 +1,3 @@
-Ice-Tools
-=========
-
 How To Install:
 
 Extract the .zip file and copy ice_tools.py to your addons folder - typically this is found in 
