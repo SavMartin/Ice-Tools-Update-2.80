@@ -141,14 +141,14 @@ class SetUpRetopoMesh(bpy.types.Operator):
             md = activeObj.modifiers.new("Mirror", 'MIRROR')
             md.show_on_cage = True
             md.use_clip = True
-            md.use_y = scn.add_mirror_y
-            md.use_z = scn.add_mirror_z
+            md.use_y = False
+            md.use_z = False
 
         #place solidify mod
         if scn.add_solid == True:
             md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
-            md.thickness = scn.add_solid_thickness
-            md.offset = scn.add_solid_offset
+            md.thickness = 0.01
+            md.offset = 0
             md.use_even_offset = True
 
         #generate grease pencil surface draw mode on retopo mesh
@@ -166,10 +166,14 @@ class SetUpRetopoMesh(bpy.types.Operator):
 
         #further mesh toggles
         bpy.ops.object.editmode_toggle()
-        context.scene.tool_settings.use_snap = True
-        context.scene.tool_settings.snap_element = 'FACE'
-        context.scene.tool_settings.snap_target = 'CLOSEST'
-        context.scene.tool_settings.use_snap_project = True
+        if scn.sw_use_surface_snap == True:
+            context.scene.tool_settings.use_snap = True
+            context.scene.tool_settings.snap_element = 'FACE'
+            context.scene.tool_settings.snap_target = 'CLOSEST'
+            context.scene.tool_settings.use_snap_project = True
+        else:
+            if context.scene.tool_settings.snap_element == 'FACE':
+                context.scene.tool_settings.use_snap = False
         context.object.show_all_edges = True
         bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
 
@@ -330,11 +334,8 @@ class UpdateModifiers(bpy.types.Operator):
                     md = activeObj.modifiers.new("Mirror", 'MIRROR')
                     md.show_on_cage = True
                     md.use_clip = True
-                    md.use_y = scn.add_mirror_y
-                    md.use_z = scn.add_mirror_z
-                else:
-                    activeObj.modifiers["Mirror"].use_y = scn.add_mirror_y
-                    activeObj.modifiers["Mirror"].use_z = scn.add_mirror_z
+                    md.use_y = False
+                    md.use_z = False
 
             #add or remove solidify mod
             if scn.add_solid == False:
@@ -342,12 +343,9 @@ class UpdateModifiers(bpy.types.Operator):
             else:
                 if modlist.find("Solidify") == -1:
                     md = activeObj.modifiers.new("Solidify", 'SOLIDIFY')
-                    md.thickness = scn.add_solid_thickness
-                    md.offset = scn.add_solid_offset
+                    md.thickness = 0.01
+                    md.offset = 0
                     md.use_even_offset = True
-                else:
-                    activeObj.modifiers["Solidify"].thickness = scn.add_solid_thickness
-                    activeObj.modifiers["Solidify"].offset = scn.add_solid_offset
 
         return {'FINISHED'}
 
@@ -361,26 +359,29 @@ class RetopoSupport(bpy.types.Panel):
 
     def draw(self, context):
         scn = context.scene
+        mod = context.active_object.modifiers
         layout = self.layout
 
         row = layout.row(align=True)
         row.alignment = 'EXPAND'
-        row.operator("setup.retopo", "Set Up Retopo Mesh")
+        row.operator("setup.retopo", "Add Retopo Mesh")
+        row.prop(scn, "sw_use_surface_snap", "", icon="SNAP_SURFACE")
+        row = layout.row()
+        row.operator("update_modifiers.retopo", "Update Modifiers")
         row = layout.row()
         col = row.column()
         col.alignment = 'EXPAND'
         box = col.box()
-        box.prop(scn, "add_mirror", "Add Mirror")
+        box.prop(scn, "add_mirror", "Mirror")
         colsplit = row.column()
         boxsplit = colsplit.box()
-        boxsplit.prop(scn, "add_solid", "Add Solidify")
-        boxsplit.prop(scn, "add_solid_thickness", "Thickness")
-        boxsplit.prop(scn, "add_solid_offset", "Offset")
-        box.prop(scn, "add_mirror_y", "Y")
-        box.prop(scn, "add_mirror_z", "Z")
-
-        row = layout.row()
-        row.operator("update_modifiers.retopo", "Update Modifiers")
+        boxsplit.prop(scn, "add_solid", "Solidify")
+        if mod.find('Solidify') != -1:
+            boxsplit.prop(mod['Solidify'], "thickness", "Thickness")
+            boxsplit.prop(mod['Solidify'], "offset", "Offset")
+        if mod.find('Mirror') != -1:
+            box.prop(mod['Mirror'], "use_y", "Y Axis")
+            box.prop(mod['Mirror'], "use_z", "Z Axis")
 
         row = layout.row()
         row.operator("shrink.update", "Apply Shrinkwrap")
@@ -403,19 +404,9 @@ def register():
 
     bpy.types.Scene.sw_mesh= StringProperty()
     bpy.types.Scene.sw_target= StringProperty()
-    bpy.types.Scene.sw_use_onlythawed = BoolProperty(default=False)
+    bpy.types.Scene.sw_use_surface_snap = BoolProperty(default=True)
     bpy.types.Scene.add_mirror = BoolProperty(default=True)
-    bpy.types.Scene.add_mirror_y = BoolProperty(default=False)
-    bpy.types.Scene.add_mirror_z = BoolProperty(default=False)
     bpy.types.Scene.add_solid = BoolProperty(default=False)
-    bpy.types.Scene.add_solid_thickness = FloatProperty(
-            default = -0.01,
-            min = -1, max = 1
-            )
-    bpy.types.Scene.add_solid_offset= FloatProperty(
-            default = 0,
-            min = -1, max = 1
-            )
 
 def unregister():
     bpy.utils.unregister_module(__name__)
