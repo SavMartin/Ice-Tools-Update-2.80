@@ -305,12 +305,13 @@ class UpdateModifiers(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None and context.active_object.mode == 'OBJECT'
+        return context.active_object is not None
 
     def execute(self, context):
         activeObj = bpy.context.active_object
         modlist = bpy.context.object.modifiers
         scn = context.scene
+        oldmode = activeObj.mode
 
         #establish link
         if len(bpy.context.selected_objects) == 2:
@@ -326,6 +327,7 @@ class UpdateModifiers(bpy.types.Operator):
             self.report({'WARNING'}, "Not Retopo Mesh!")
             return {'FINISHED'}
         else:
+            if activeObj.mode == 'EDIT': bpy.ops.object.editmode_toggle()
             #add or remove mirror mod
             if scn.add_mirror == False:
                 bpy.ops.object.modifier_remove(modifier="Mirror")
@@ -346,6 +348,8 @@ class UpdateModifiers(bpy.types.Operator):
                     md.thickness = 0.01
                     md.offset = 0
                     md.use_even_offset = True
+
+        if activeObj.mode == 'OBJECT' and oldmode == 'EDIT': bpy.ops.object.editmode_toggle()
 
         return {'FINISHED'}
 
@@ -372,7 +376,7 @@ class RetopoSupport(bpy.types.Panel):
         row.alignment = "EXPAND"
         box = row.box()
         box.prop(scn, "add_mirror", "Mirror")
-        box = row.box()        
+        box = row.box()
         box.prop(scn, "add_solid", "Solidify")
         if mod.find('Mirror') != -1:
             row = layout.row(align=True)
@@ -381,7 +385,7 @@ class RetopoSupport(bpy.types.Panel):
             col = box.column()
             col.prop(mod['Mirror'], "use_x", "X")
             col.prop(mod['Mirror'], "use_y", "Y")
-            col.prop(mod['Mirror'], "use_z", "Z")                 
+            col.prop(mod['Mirror'], "use_z", "Z")
         if mod.find('Solidify') != -1:
             if mod.find('Mirror') == -1:
                 row = layout.row(align=True)
@@ -390,7 +394,7 @@ class RetopoSupport(bpy.types.Panel):
             col = box.column()
             col.prop(mod['Solidify'], "thickness", "Thickness")
             col.prop(mod['Solidify'], "offset", "Offset")
-            col.prop(mod['Solidify'], "use_rim_only", "Only Rim")            
+            col.prop(mod['Solidify'], "use_rim_only", "Only Rim")
 
         row = layout.row()
         row.operator("shrink.update", "Apply Shrinkwrap")
