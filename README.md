@@ -40,7 +40,7 @@ MIRROR AND SOLIDIFY MODIFIER TOGGLES AND PARAMETERS
 
 You can change the states of the modifiers here. The mirror will have X-symmetry on by default
 but the T-panel menu will allow you to activate/deactivate the Y and Z axis. This is also true
-for the thickness and offset of the solidify modifiers. Changes for the modifier parameters will
+for the thickness, offset and use only rim option of the solidify modifier. Changes for the modifier parameters will
 be live.
 
 For adding or removing the mirror and solidify modifiers check or uncheck their toggle states and
