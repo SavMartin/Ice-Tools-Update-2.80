@@ -368,20 +368,28 @@ class RetopoSupport(bpy.types.Panel):
         row.prop(scn, "sw_use_surface_snap", "", icon="SNAP_SURFACE")
         row = layout.row()
         row.operator("update_modifiers.retopo", "Update Modifiers")
-        row = layout.row()
-        col = row.column()
-        col.alignment = 'EXPAND'
-        box = col.box()
+        row = layout.row(align=True)
+        row.alignment = "EXPAND"
+        split = row.split(align=True, percentage=0.4)
+        box = split.box()
         box.prop(scn, "add_mirror", "Mirror")
-        colsplit = row.column()
-        boxsplit = colsplit.box()
-        boxsplit.prop(scn, "add_solid", "Solidify")
-        if mod.find('Solidify') != -1:
-            boxsplit.prop(mod['Solidify'], "thickness", "Thickness")
-            boxsplit.prop(mod['Solidify'], "offset", "Offset")
+        box = split.box()
+        box.prop(scn, "add_solid", "Solidify")
         if mod.find('Mirror') != -1:
-            box.prop(mod['Mirror'], "use_y", "Y Axis")
-            box.prop(mod['Mirror'], "use_z", "Z Axis")
+            row = layout.row(align=True)
+            row.alignment = "EXPAND"
+            split = row.split(align=True, percentage=0.4)
+            box = split.box()
+            col = box.column()
+            col.prop(mod['Mirror'], "use_x", "X")
+            col.prop(mod['Mirror'], "use_y", "Y")
+            col.prop(mod['Mirror'], "use_z", "Z")
+        if mod.find('Solidify') != -1:
+            box = split.box()
+            col = box.column()
+            col.prop(mod['Solidify'], "thickness", "Thickness")
+            col.prop(mod['Solidify'], "offset", "Offset")
+            col.prop(mod['Solidify'], "thickness_clamp", "Clamp")
 
         row = layout.row()
         row.operator("shrink.update", "Apply Shrinkwrap")
