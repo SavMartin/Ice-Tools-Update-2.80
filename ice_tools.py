@@ -372,25 +372,25 @@ class RetopoSupport(bpy.types.Panel):
         row.alignment = "EXPAND"
         box = row.box()
         box.prop(scn, "add_mirror", "Mirror")
-        box = row.box()
+        box = row.box()        
         box.prop(scn, "add_solid", "Solidify")
         if mod.find('Mirror') != -1:
             row = layout.row(align=True)
             row.alignment = "EXPAND"
             box = row.box()
-            col = box.column(align=True)
+            col = box.column()
             col.prop(mod['Mirror'], "use_x", "X")
             col.prop(mod['Mirror'], "use_y", "Y")
-            col.prop(mod['Mirror'], "use_z", "Z")
+            col.prop(mod['Mirror'], "use_z", "Z")                 
         if mod.find('Solidify') != -1:
             if mod.find('Mirror') == -1:
                 row = layout.row(align=True)
                 row.alignment = "EXPAND"
             box = row.box()
-            col = box.column(align=True)
+            col = box.column()
             col.prop(mod['Solidify'], "thickness", "Thickness")
             col.prop(mod['Solidify'], "offset", "Offset")
-            col.prop(mod['Solidify'], "use_rim_only", "Only Rim")
+            col.prop(mod['Solidify'], "use_rim_only", "Only Rim")            
 
         row = layout.row()
         row.operator("shrink.update", "Apply Shrinkwrap")
