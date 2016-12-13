@@ -74,7 +74,7 @@ Viewport, X-Ray will let you see them behind any objects and Hidden Wire is for 
 in edit mode so you can only see the verts or edges - this allows for greater ease and control in
 cases of retopology.
 
-You can support me by purchasing the complete version of the Ice tools addon here: https://gum.co/WBCq
+You can support me by purchasing the complete version of the Ice tools addon here: https://gum.co/vSocf
 
 Quick demo for hard surface modelling using Ice Tools: https://youtu.be/FFvLTHKKv2Y
 
