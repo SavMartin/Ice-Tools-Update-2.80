@@ -1,3 +1,5 @@
+This repository only contains the Ice Tools Lite if you want the complete code you can purchase it in the Gumroad link below.
+
 How To Install:
 
 Extract the .zip file and copy ice_tools.py to your addons folder - typically this is found in
@@ -72,7 +74,7 @@ Viewport, X-Ray will let you see them behind any objects and Hidden Wire is for 
 in edit mode so you can only see the verts or edges - this allows for greater ease and control in
 cases of retopology.
 
-You can support me by purchasing the Ice tools addon here: https://gum.co/WBCq
+You can support me by purchasing the complete version of the Ice tools addon here: https://gum.co/WBCq
 
 Quick demo for hard surface modelling using Ice Tools: https://youtu.be/FFvLTHKKv2Y
 
