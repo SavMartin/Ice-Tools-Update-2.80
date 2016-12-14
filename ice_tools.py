@@ -348,4 +348,4 @@ def unregister():
     bpy.utils.unregister_module(__name__)
 
 if __name__ == "__main__":
-register()
+    register()
