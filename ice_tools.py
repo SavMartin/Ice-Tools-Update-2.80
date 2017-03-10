@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Ice Tools",
     "author": "Ian Lloyd Dela Cruz",
-    "version": (2, 0),
+    "version": (2, 0, 1),
     "blender": (2, 7, 0),
     "location": "3d View > Tool shelf",
     "description": "Retopology support",
@@ -59,7 +59,7 @@ def sw_clipping(obj, autoclip, clipcenter):
 
 def sw_Update(meshlink, wrap_offset, wrap_meth, autoclip, clipcenter):
     activeObj = bpy.context.active_object
-    scn = bpy.context.window_manager
+    scn = bpy.context.scene
     oldmod = activeObj.mode
     selmod = bpy.context.tool_settings.mesh_select_mode
     modnam = "shrinkwrap_apply"
@@ -73,7 +73,7 @@ def sw_Update(meshlink, wrap_offset, wrap_meth, autoclip, clipcenter):
     if selmod[2] == True:
         oldSel = 'FACE'
 
-    bpy.context.sw_use_only_thawed.objects.active = activeObj
+    bpy.context.scene.objects.active = activeObj
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_mode(type='VERT')
 
@@ -160,17 +160,17 @@ class SetUpRetopoMesh(bpy.types.Operator):
         md.use_clip = True
 
         #generate grease pencil surface draw mode on retopo mesh
-        bpy.context.sw_use_only_thawed.tool_settings.grease_pencil_source = 'OBJECT'
+        bpy.context.tool_settings.grease_pencil_source = 'OBJECT'
         if context.object.grease_pencil is None: bpy.ops.gpencil.data_add()
         if context.object.grease_pencil.layers.active is None: bpy.ops.gpencil.layer_add()
         bpy.data.objects[oldObj].select = True
 
         #further mesh toggles
         bpy.ops.object.editmode_toggle()
-        context.sw_use_only_thawed.tool_settings.use_snap = True
-        context.sw_use_only_thawed.tool_settings.snap_element = 'FACE'
-        context.sw_use_only_thawed.tool_settings.snap_target = 'CLOSEST'
-        context.sw_use_only_thawed.tool_settings.use_snap_project = True
+        context.tool_settings.use_snap = True
+        context.tool_settings.snap_element = 'FACE'
+        context.tool_settings.snap_target = 'CLOSEST'
+        context.tool_settings.use_snap_project = True
         context.object.show_all_edges = True
         bpy.ops.mesh.select_mode(use_extend=False, use_expand=False, type='VERT')
 
